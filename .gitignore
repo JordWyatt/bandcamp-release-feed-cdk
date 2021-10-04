@@ -1,0 +1,28 @@
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+
+*.js
+!jest.config.js
+*.d.ts
+node_modules
