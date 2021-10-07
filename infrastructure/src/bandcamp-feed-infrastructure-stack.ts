@@ -57,7 +57,7 @@ export class BandcampFeedInfrastructureStack extends cdk.Stack {
     });
 
     const bucket = new s3.Bucket(this, 'HostingBucket', {
-      bucketName: 'jordwyatt-bc-feed',
+      bucketName: process.env.HOSTING_BUCKET_NAME,
       websiteIndexDocument: 'index.html', // 1
       blockPublicAccess: new s3.BlockPublicAccess({ restrictPublicBuckets: false }) // 2
     })
