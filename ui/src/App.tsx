@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Release from "./components/Release";
 import axios from "axios";
 import "./App.css";
