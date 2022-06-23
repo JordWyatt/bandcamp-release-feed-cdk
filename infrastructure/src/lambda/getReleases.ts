@@ -15,7 +15,7 @@ exports.handler = async (event: APIGatewayEvent, context: Context) => {
   let responseCode = 200;
   let responseBody = {};
 
-  if (method === "GET") {
+  if (method === "POST") {
     const params: DocumentClient.QueryInput = {
       TableName: process.env.RELEASE_TABLE_NAME,
       KeyConditionExpression: "userId = :userId",
@@ -23,12 +23,27 @@ exports.handler = async (event: APIGatewayEvent, context: Context) => {
         ":userId": userId,
       },
       ScanIndexForward: false,
-      // temp until paging is supported
       Limit: 20,
     };
 
+    if (
+      event.queryStringParameters &&
+      event.queryStringParameters["exclusiveStartKey"]
+    ) {
+      const parsedStartKey = JSON.parse(
+        event.queryStringParameters["exclusiveStartKey"]
+      );
+      params.ExclusiveStartKey = {
+        userId: parsedStartKey.userId,
+        createdAt: parsedStartKey.createdAt,
+      };
+    }
+
     const results = await documentClient.query(params).promise();
-    responseBody = results.Items || [];
+    responseBody = {
+      items: results.Items || [],
+      lastEvaluatedKey: results.LastEvaluatedKey,
+    };
   } else {
     responseCode = 405;
     responseBody = { error: `Method ${method} not allowed` };

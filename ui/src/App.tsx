@@ -1,23 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Release from "./components/Release";
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import "./App.css";
 import { ReleaseDetails } from "./types";
 import { Row, Col, List } from "antd";
+import internal from "assert";
+
+interface ReleasePrimaryKey {
+  createdAt?: number;
+  userId?: number;
+}
 
 function App() {
   const [releases, setReleases] = useState<ReleaseDetails[]>([]);
+  const [lastEvaluatedKey, setLastEvaluatedKey] = useState<ReleasePrimaryKey>(
+    {}
+  );
+
+  // https://stackoverflow.com/questions/55840294/how-to-fix-missing-dependency-warning-when-using-useeffect-react-hook
+  const fetchReleases = useCallback(async () => {
+    const params: any = {};
+    if (Object.keys(lastEvaluatedKey).length) {
+      params.exclusiveStartKey = lastEvaluatedKey;
+    }
+
+    const result = await axios.get(
+      process.env.REACT_APP_API_GATEWAY_URL as string,
+      { params: { exclusiveStartKey: lastEvaluatedKey } }
+    );
+    setReleases(result.data.items);
+    setLastEvaluatedKey(result.data.lastEvaluatedKey);
+  }, [lastEvaluatedKey]);
 
   useEffect(() => {
-    const fetchReleases = async () => {
-      const result = await axios.get(
-        process.env.REACT_APP_API_GATEWAY_URL as string
-      );
-      setReleases(result.data);
-    };
-
     fetchReleases();
-  }, []);
+  }, [fetchReleases]);
 
   return (
     <Row justify="center">
@@ -28,6 +45,7 @@ function App() {
             <Release release={item} />
           ))}
         </List>
+        <button onClick={fetchReleases}>click me to get more!</button>
       </Col>
     </Row>
   );

@@ -19,6 +19,9 @@ exports.handler = async (event: SNSEvent, context: Context) => {
     },
   } = message;
 
+  // TODO - Remove this
+  console.debug(`DEBUG: ${content}`);
+
   if (!subject.includes("New release from")) {
     console.error("Message subject invalid");
     return;
