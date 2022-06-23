@@ -17,7 +17,7 @@ function App() {
   );
 
   // https://stackoverflow.com/questions/55840294/how-to-fix-missing-dependency-warning-when-using-useeffect-react-hook
-  const fetchReleases = useCallback(async () => {
+  const fetchReleases = async () => {
     const body: any = {};
     if (Object.keys(lastEvaluatedKey).length) {
       body.startKey = lastEvaluatedKey;
@@ -29,11 +29,13 @@ function App() {
     );
     setReleases(result.data.items);
     setLastEvaluatedKey(result.data.lastEvaluatedKey);
-  }, [lastEvaluatedKey]);
+  };
 
   useEffect(() => {
     fetchReleases();
-  }, [fetchReleases]);
+    // TODO - FIX THIS
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Row justify="center">
