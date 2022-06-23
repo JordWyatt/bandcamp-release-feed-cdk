@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useState, useEffect } from "react";
 import Release from "./components/Release";
 import axios from "axios";
 import "./App.css";
@@ -6,7 +6,7 @@ import { ReleaseDetails } from "./types";
 import { Row, Col, List } from "antd";
 
 function App() {
-  const [releases, setReleases] = React.useState<ReleaseDetails[]>([]);
+  const [releases, setReleases] = useState<ReleaseDetails[]>([]);
 
   useEffect(() => {
     const fetchReleases = async () => {

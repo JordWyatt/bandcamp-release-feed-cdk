@@ -1,10 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import * as cheerio from "cheerio";
 import axios from "axios";
-import {
-  Context,
-  SNSEvent,
-} from "aws-lambda";
+import { Context, SNSEvent } from "aws-lambda";
 
 exports.handler = async (event: SNSEvent, context: Context) => {
   if (!process.env.RELEASE_TABLE_NAME) {
@@ -27,8 +24,7 @@ exports.handler = async (event: SNSEvent, context: Context) => {
     return;
   }
 
-  // TODO: Implement
-  const userId = await getUserId()
+  const userId = await getUserId();
 
   const url = getBandcampUrl(content);
   const releaseDetails = await getReleaseDetails(url);
@@ -45,7 +41,7 @@ exports.handler = async (event: SNSEvent, context: Context) => {
       type: { S: releaseDetails.type },
       streamURL: { S: releaseDetails.streamURL },
       createdAt: { N: Date.now().toString() },
-      userId: { N: userId.toString() }
+      userId: { N: userId.toString() },
     },
     ReturnConsumedCapacity: "TOTAL",
   };
@@ -82,13 +78,13 @@ const getReleaseDetails = async (bandcampUrl: string) => {
     releaseDate: releaseJson.datePublished,
     title: releaseJson.name,
     type: splitUrl[splitUrl.length - 2],
-    streamURL: "foobar"
+    streamURL: "foobar",
   };
 
   return releaseDetails;
 };
 
-// TODO: Implent
+// TODO: Implement... maybe?
 const getUserId = async () => {
-  return 1234
-}
+  return 1234;
+};
