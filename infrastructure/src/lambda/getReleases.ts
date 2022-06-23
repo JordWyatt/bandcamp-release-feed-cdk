@@ -26,16 +26,11 @@ exports.handler = async (event: APIGatewayEvent, context: Context) => {
       Limit: 20,
     };
 
-    if (
-      event.queryStringParameters &&
-      event.queryStringParameters["exclusiveStartKey"]
-    ) {
-      const parsedStartKey = JSON.parse(
-        event.queryStringParameters["exclusiveStartKey"]
-      );
+    if (event.body) {
+      const body = JSON.parse(event.body);
       params.ExclusiveStartKey = {
-        userId: parsedStartKey.userId,
-        createdAt: parsedStartKey.createdAt,
+        userId: body.startKey.userId,
+        createdAt: body.startKey.createdAt,
       };
     }
 

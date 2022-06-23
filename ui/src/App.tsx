@@ -18,14 +18,14 @@ function App() {
 
   // https://stackoverflow.com/questions/55840294/how-to-fix-missing-dependency-warning-when-using-useeffect-react-hook
   const fetchReleases = useCallback(async () => {
-    const params: any = {};
+    const body: any = {};
     if (Object.keys(lastEvaluatedKey).length) {
-      params.exclusiveStartKey = lastEvaluatedKey;
+      body.exclusiveStartKey = lastEvaluatedKey;
     }
 
-    const result = await axios.get(
+    const result = await axios.post(
       process.env.REACT_APP_API_GATEWAY_URL as string,
-      { params: { exclusiveStartKey: lastEvaluatedKey } }
+      body
     );
     setReleases(result.data.items);
     setLastEvaluatedKey(result.data.lastEvaluatedKey);
