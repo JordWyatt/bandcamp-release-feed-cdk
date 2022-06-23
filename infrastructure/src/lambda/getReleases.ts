@@ -26,8 +26,9 @@ exports.handler = async (event: APIGatewayEvent, context: Context) => {
       Limit: 20,
     };
 
-    if (event.body) {
-      const body = JSON.parse(event.body);
+    const body = event.body ? JSON.parse(event.body) : {};
+
+    if (body.startKey) {
       params.ExclusiveStartKey = {
         userId: body.startKey.userId,
         createdAt: body.startKey.createdAt,
@@ -35,6 +36,7 @@ exports.handler = async (event: APIGatewayEvent, context: Context) => {
     }
 
     const results = await documentClient.query(params).promise();
+
     responseBody = {
       items: results.Items || [],
       lastEvaluatedKey: results.LastEvaluatedKey,

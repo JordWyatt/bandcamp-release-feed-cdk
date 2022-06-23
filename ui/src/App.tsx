@@ -20,7 +20,7 @@ function App() {
   const fetchReleases = useCallback(async () => {
     const body: any = {};
     if (Object.keys(lastEvaluatedKey).length) {
-      body.exclusiveStartKey = lastEvaluatedKey;
+      body.startKey = lastEvaluatedKey;
     }
 
     const result = await axios.post(
