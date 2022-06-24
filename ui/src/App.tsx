@@ -27,7 +27,7 @@ function App() {
       process.env.REACT_APP_API_GATEWAY_URL as string,
       body
     );
-    setReleases([...releases, result.data.items]);
+    setReleases([...releases, ...result.data.items]);
     setLastEvaluatedKey(result.data.lastEvaluatedKey);
   };
 
