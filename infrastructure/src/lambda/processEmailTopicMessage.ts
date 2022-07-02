@@ -119,8 +119,10 @@ const getReleaseId = (releaseType: string, releaseJson: any): number | null => {
     return null;
   }
 
+  console.log(albumRelease.additionalProperty)
+
   const itemIdProperty = albumRelease.additionalProperty.find(
-    (x: BandcampProperty) => x.name == "track_id"
+    (x: BandcampProperty) => x.name == "item_id"
   );
   return itemIdProperty.value;
 };
