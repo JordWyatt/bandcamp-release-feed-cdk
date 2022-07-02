@@ -84,8 +84,9 @@ const getReleaseDetails = async (bandcampUrl: string) => {
   )[0] as cheerio.TagElement;
   const releaseJson = JSON.parse(bandcampJsonNode.children[0].data as string);
   const splitUrl = bandcampUrl.split("/");
-  const releaseType = splitUrl[splitUrl.length - 2];
 
+  const releaseType = splitUrl[splitUrl.length - 2];
+  const releaseId = getReleaseId(releaseType, releaseJson);
   const releaseDetails = {
     url: bandcampUrl,
     artist: releaseJson.byArtist.name,
@@ -94,7 +95,7 @@ const getReleaseDetails = async (bandcampUrl: string) => {
     releaseDate: releaseJson.datePublished,
     title: releaseJson.name,
     type: releaseType,
-    releaseId: getReleaseId(releaseType, releaseJson),
+    releaseId: releaseId ? releaseId.toString() : "",
     releaseJson: releaseJson,
   };
 
@@ -119,7 +120,7 @@ const getReleaseId = (releaseType: string, releaseJson: any): number | null => {
     return null;
   }
 
-  console.log(albumRelease.additionalProperty)
+  console.log(albumRelease.additionalProperty);
 
   const itemIdProperty = albumRelease.additionalProperty.find(
     (x: BandcampProperty) => x.name == "item_id"
