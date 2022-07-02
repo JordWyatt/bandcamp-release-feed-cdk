@@ -1,5 +1,5 @@
 ## TODO
 
-- Enable DKIM on SES
+- Embedded player
 - Add user friendly domain name
-- User accounts w/ registration flow (if possible?
+- User accounts w/ registration flow (if possible)?

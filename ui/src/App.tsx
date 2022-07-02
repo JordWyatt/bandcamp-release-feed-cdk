@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Release from "./components/Release";
+import Player from "./components/Player";
 import "./App.css";
 import { ReleaseDetails } from "./types";
 import { Row, Col, List } from "antd";
@@ -10,9 +11,10 @@ interface ReleasePrimaryKey {
   userId?: number;
 }
 
-function App() {
+const App = () => {
   const [loading, setLoading] = useState<Boolean>(false);
   const [releases, setReleases] = useState<ReleaseDetails[]>([]);
+  const [currentRelease, setCurrentRelease] = useState<ReleaseDetails>();
   const [lastEvaluatedKey, setLastEvaluatedKey] = useState<ReleasePrimaryKey>(
     {}
   );
@@ -54,26 +56,36 @@ function App() {
   }, []);
 
   return (
-    <Row justify="center">
-      <Col span={12}>
-        <h1 className="title">New Releases</h1>
-        <InfiniteScroll
-          dataLength={releases.length}
-          next={fetchReleases}
-          hasMore={lastEvaluatedKey != null}
-          endMessage={"All done!"}
-          loader={<h3>Loading...</h3>}
-        >
-          <List
-            size="large"
-            itemLayout="vertical"
-            dataSource={releases}
-            renderItem={(item) => <Release release={item} />}
-          />
-        </InfiniteScroll>
-      </Col>
-    </Row>
+    <div>
+      {currentRelease && currentRelease.releaseId && (
+        <Player release={currentRelease} />
+      )}
+      <Row justify="center">
+        <Col span={12}>
+          <h1 className="title">New Releases</h1>
+          <InfiniteScroll
+            dataLength={releases.length}
+            next={fetchReleases}
+            hasMore={lastEvaluatedKey != null}
+            endMessage={"All done!"}
+            loader={<h3>Loading...</h3>}
+          >
+            <List
+              size="large"
+              itemLayout="vertical"
+              dataSource={releases}
+              renderItem={(item) => (
+                <Release
+                  release={item}
+                  onClick={() => setCurrentRelease(item)}
+                />
+              )}
+            />
+          </InfiniteScroll>
+        </Col>
+      </Row>
+    </div>
   );
-}
+};
 
 export default App;
