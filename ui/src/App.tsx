@@ -46,12 +46,11 @@ function App() {
     setReleases([...releases, ...resultJson.items]);
     setLastEvaluatedKey(resultJson.lastEvaluatedKey);
     setLoading(false);
-    console.log();
   };
 
   useEffect(() => {
     fetchReleases();
-    // seslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
