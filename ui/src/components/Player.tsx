@@ -7,7 +7,7 @@ type AppProps = {
 };
 
 const Player = ({ release }: AppProps) => {
-  const { height, width } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const { url, releaseId, title, artist, type } = release;
 
   return (
