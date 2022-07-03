@@ -60,30 +60,32 @@ const App = () => {
       {currentRelease && currentRelease.releaseId && (
         <Player release={currentRelease} />
       )}
-      <Row justify="center">
-        <Col span={12}>
-          <h1 className="title">New Releases</h1>
-          <InfiniteScroll
-            dataLength={releases.length}
-            next={fetchReleases}
-            hasMore={lastEvaluatedKey != null}
-            endMessage={"All done!"}
-            loader={<h3>Loading...</h3>}
-          >
-            <List
-              size="large"
-              itemLayout="vertical"
-              dataSource={releases}
-              renderItem={(item) => (
-                <Release
-                  release={item}
-                  onClick={() => setCurrentRelease(item)}
-                />
-              )}
-            />
-          </InfiniteScroll>
-        </Col>
-      </Row>
+      <div className="releases">
+        <Row justify="center">
+          <Col xs={24} sm={24} md={24} lg={12} xl={12}>
+            <h1 className="title">New Releases</h1>
+            <InfiniteScroll
+              dataLength={releases.length}
+              next={fetchReleases}
+              hasMore={lastEvaluatedKey != null}
+              endMessage={"All done!"}
+              loader={<h3>Loading...</h3>}
+            >
+              <List
+                size="large"
+                itemLayout="vertical"
+                dataSource={releases}
+                renderItem={(item) => (
+                  <Release
+                    release={item}
+                    onClick={() => setCurrentRelease(item)}
+                  />
+                )}
+              />
+            </InfiniteScroll>
+          </Col>
+        </Row>
+      </div>
     </div>
   );
 };
