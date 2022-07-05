@@ -9,16 +9,35 @@ import * as subscriptions from "@aws-cdk/aws-sns-subscriptions";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as iam from "@aws-cdk/aws-iam";
 import * as path from "path";
+import { IFunction } from "@aws-cdk/aws-lambda";
+import { RedirectProtocol } from "@aws-cdk/aws-s3";
 
 export class BandcampFeedInfrastructureStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    const topic = new sns.Topic(this, "EmailTopic");
-    const table = new ddb.Table(this, "Releases", {
-      partitionKey: { name: "userId", type: ddb.AttributeType.NUMBER },
-      sortKey: { name: "createdAt", type: ddb.AttributeType.NUMBER },
-    });
 
+    const topic = this.setupSnsTopic();
+    const releaseTable = this.setupReleaseTable();
+    const emailTopicMessageHandler =
+      this.setupEmailTopicMessageLambda(releaseTable);
+    const getReleasesHandler = this.setupGetReleasesLambda(releaseTable);
+
+    this.setupSesReceiptRuleSet(topic);
+    this.setupApiGateway(getReleasesHandler);
+    this.setupS3Buckets();
+
+    topic.addSubscription(
+      new subscriptions.LambdaSubscription(emailTopicMessageHandler)
+    );
+    releaseTable.grantReadWriteData(emailTopicMessageHandler);
+    releaseTable.grantReadWriteData(getReleasesHandler);
+  }
+
+  setupSnsTopic() {
+    return new sns.Topic(this, "EmailTopic");
+  }
+
+  setupEmailTopicMessageLambda(releaseTable: ddb.Table) {
     const emailTopicMessageHandler = new lambda.NodejsFunction(
       this,
       "ProcessEmailTopicMessage",
@@ -26,11 +45,24 @@ export class BandcampFeedInfrastructureStack extends cdk.Stack {
         entry: path.resolve("src/lambda/processEmailTopicMessage.ts"),
         timeout: cdk.Duration.seconds(10),
         environment: {
-          RELEASE_TABLE_NAME: table.tableName,
+          RELEASE_TABLE_NAME: releaseTable.tableName,
         },
       }
     );
 
+    return emailTopicMessageHandler;
+  }
+
+  setupReleaseTable() {
+    const table = new ddb.Table(this, "Releases", {
+      partitionKey: { name: "userId", type: ddb.AttributeType.NUMBER },
+      sortKey: { name: "createdAt", type: ddb.AttributeType.NUMBER },
+    });
+
+    return table;
+  }
+
+  setupGetReleasesLambda(releaseTable: ddb.Table) {
     const getReleasesHandler = new lambda.NodejsFunction(
       this,
       "GetReleasesHandler",
@@ -38,17 +70,15 @@ export class BandcampFeedInfrastructureStack extends cdk.Stack {
         entry: path.resolve("src/lambda/getReleases.ts"),
         timeout: cdk.Duration.seconds(10),
         environment: {
-          RELEASE_TABLE_NAME: table.tableName,
+          RELEASE_TABLE_NAME: releaseTable.tableName,
         },
       }
     );
 
-    topic.addSubscription(
-      new subscriptions.LambdaSubscription(emailTopicMessageHandler)
-    );
-    table.grantReadWriteData(emailTopicMessageHandler);
-    table.grantReadWriteData(getReleasesHandler);
+    return getReleasesHandler;
+  }
 
+  setupSesReceiptRuleSet(topic: sns.Topic) {
     new ses.ReceiptRuleSet(this, "RuleSet", {
       rules: [
         {
@@ -61,25 +91,39 @@ export class BandcampFeedInfrastructureStack extends cdk.Stack {
         },
       ],
     });
+  }
 
-    new apiGateway.LambdaRestApi(this, "ReleaseApi", {
-      handler: getReleasesHandler,
+  setupApiGateway(handler: IFunction) {
+    return new apiGateway.LambdaRestApi(this, "ReleaseApi", {
+      handler,
     });
+  }
 
-    const bucket = new s3.Bucket(this, "HostingBucket", {
+  setupS3Buckets() {
+    const hostingBucket = new s3.Bucket(this, "HostingBucket", {
       bucketName: process.env.HOSTING_BUCKET_NAME,
-      websiteIndexDocument: "index.html", // 1
+      websiteIndexDocument: "index.html",
       blockPublicAccess: new s3.BlockPublicAccess({
         restrictPublicBuckets: false,
-      }), // 2
+      }),
     });
 
     const bucketPolicy = new iam.PolicyStatement({
       actions: ["s3:GetObject"],
-      resources: [`${bucket.bucketArn}/*`],
+      resources: [`${hostingBucket.bucketArn}/*`],
       principals: [new iam.AnyPrincipal()],
     });
 
-    bucket.addToResourcePolicy(bucketPolicy);
+    hostingBucket.addToResourcePolicy(bucketPolicy);
+
+    if (process.env.REDIRECT_BUCKET_NAME) {
+      new s3.Bucket(this, "RedirectBucket", {
+        bucketName: process.env.REDIRECT_BUCKET_NAME,
+        websiteRedirect: {
+          hostName: process.env.HOSTING_BUCKET_NAME as string,
+          protocol: RedirectProtocol.HTTP,
+        },
+      });
+    }
   }
 }
