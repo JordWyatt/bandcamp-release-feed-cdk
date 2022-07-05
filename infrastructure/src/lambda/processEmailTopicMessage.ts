@@ -1,10 +1,18 @@
 import { DynamoDB } from "aws-sdk";
 import * as cheerio from "cheerio";
 import axios from "axios";
-import {
-  Context,
-  SNSEvent,
-} from "aws-lambda";
+import { Context, SNSEvent } from "aws-lambda";
+
+enum RELEASE_TYPE {
+  Track = "track",
+  Album = "album",
+}
+
+type BandcampProperty = {
+  "@type": string;
+  value: string | number;
+  name: string;
+};
 
 exports.handler = async (event: SNSEvent, context: Context) => {
   if (!process.env.RELEASE_TABLE_NAME) {
@@ -22,13 +30,15 @@ exports.handler = async (event: SNSEvent, context: Context) => {
     },
   } = message;
 
+  // TODO - Remove this
+  console.debug(`DEBUG: ${content}`);
+
   if (!subject.includes("New release from")) {
     console.error("Message subject invalid");
     return;
   }
 
-  // TODO: Implement
-  const userId = await getUserId()
+  const userId = await getUserId();
 
   const url = getBandcampUrl(content);
   const releaseDetails = await getReleaseDetails(url);
@@ -43,9 +53,10 @@ exports.handler = async (event: SNSEvent, context: Context) => {
       releaseDate: { S: releaseDetails.releaseDate },
       title: { S: releaseDetails.title },
       type: { S: releaseDetails.type },
-      streamURL: { S: releaseDetails.streamURL },
       createdAt: { N: Date.now().toString() },
-      userId: { N: userId.toString() }
+      userId: { N: userId.toString() },
+      releaseId: { N: releaseDetails.releaseId },
+      releaseJson: { S: JSON.stringify(releaseDetails.releaseJson) },
     },
     ReturnConsumedCapacity: "TOTAL",
   };
@@ -74,6 +85,8 @@ const getReleaseDetails = async (bandcampUrl: string) => {
   const releaseJson = JSON.parse(bandcampJsonNode.children[0].data as string);
   const splitUrl = bandcampUrl.split("/");
 
+  const releaseType = splitUrl[splitUrl.length - 2];
+  const releaseId = getReleaseId(releaseType, releaseJson);
   const releaseDetails = {
     url: bandcampUrl,
     artist: releaseJson.byArtist.name,
@@ -81,14 +94,36 @@ const getReleaseDetails = async (bandcampUrl: string) => {
     label: releaseJson.publisher.name,
     releaseDate: releaseJson.datePublished,
     title: releaseJson.name,
-    type: splitUrl[splitUrl.length - 2],
-    streamURL: "foobar"
+    type: releaseType,
+    releaseId: releaseId ? releaseId.toString() : "",
+    releaseJson: releaseJson,
   };
 
   return releaseDetails;
 };
 
-// TODO: Implent
+// TODO: Implement... maybe?
 const getUserId = async () => {
-  return 1234
-}
+  return 1234;
+};
+
+const getReleaseId = (releaseType: string, releaseJson: any): number | null => {
+  let albumRelease;
+  if (releaseType == RELEASE_TYPE.Track) {
+    albumRelease = releaseJson.inAlbum.albumRelease[0];
+  } else if (releaseType == RELEASE_TYPE.Album) {
+    albumRelease = releaseJson.albumRelease[0];
+  } else {
+    console.warn(
+      `Unrecognised release type: ${releaseType}, aborting attempt to fetch release Id`
+    );
+    return null;
+  }
+
+  console.log(albumRelease.additionalProperty);
+
+  const itemIdProperty = albumRelease.additionalProperty.find(
+    (x: BandcampProperty) => x.name == "item_id"
+  );
+  return itemIdProperty.value;
+};

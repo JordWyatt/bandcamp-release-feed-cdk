@@ -8,4 +8,6 @@ export type ReleaseDetails = {
   streamUrl: string;
   title: string;
   type: string;
+  releaseId: number;
+  releaseJson: string;
 };
